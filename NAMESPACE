@@ -1,0 +1,7 @@
+export(read_exprs_mat)
+importClassesFrom(Biobase,AnnotatedDataFrame)
+importClassesFrom(Biobase,ExpressionSet)
+importFrom(data.table,fread)
+importFrom(RCurl,getURL)
+importFrom(Rlabkey,labkey.selectRows)
+importFrom(Rlabkey,makeFilter)
