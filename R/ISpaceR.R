@@ -1,7 +1,7 @@
 # labkey.url.base <- "https://www.immunespace.org/"
 # labkey.url.path <- "/Yale/SDY162/"
 # labkey.url.path <- "/Emory/SDY61/"
-# e_m_a <- c("EXPM0001", "EXPM0002")
+e_m_a <- c("EXPM0001", "EXPM0002")
 # e_m_a <- c("EXPM0001")
 ##
 #' Read expression matrix
@@ -63,40 +63,11 @@ read_exprs_mat <- function(e_m_a){
     descr <- paste(umat[exm, "expression_matrix_accession"], ": ", umat[exm, "matrix_description_description"])
     eset <- ExpressionSet(assayData = exprs, phenoData = phenodata, fdata = fdata)
     eset@experimentData@title <- descr
-    lEset[[exm]] <- eset
-    
+    lEset[[exm]] <- eset  
   }
   return(lEset)
 }
   
-  
-  
-  
-  
-  
-  
-#   # Read the expression_matrix file
-#   exprs_link <- URLdecode(unique(exMat$download_link_download_link))
-#   URL <- getURL(exprs_link, .opts=list(netrc=TRUE))
-# #   exprs <- read.table(textConnection(URL))
-#   exprs <- fread(paste0("\t", URL))
-#   exprs <- data.frame(exprs[,2:ncol(exprs), with=FALSE], row.names=exprs[,1, with=FALSE][[1]])
-#   
-#   # Read the feature mapping file
-#   fdata_link <- URLdecode(unique(exMat[[grep("feature.*download", colnames(exMat))]])) #tmp: will be standardized
-#   URL <- getURL(fdata_link, .opts=list(netrc=TRUE))
-#   fdata <- read.table(textConnection(URL), header=TRUE, sep="\t")
-#   
-#   fdata <- fdata[na.omit(match(rownames(exprs), fdata$feature_id)), ]
-#   rownames(exMat) <- exMat$biosample_accession
-#   exMat <- exMat[ match(colnames(exprs), exMat$biosample_accession), ]
-#   exMat[] <- data.frame(sapply(exMat, as.character))
-#   eset <- ExpressionSet(assayData = as.matrix(exprs),
-#                         phenoData = as(exMat, "AnnotatedDataFrame"),
-#                         featureDat = as(fdata, "AnnotatedDataFrame"))
-#   return(eset)
-# }
-
 ##
 #' Standard limma analysis
 #' 
@@ -121,7 +92,7 @@ read_exprs_mat <- function(e_m_a){
 ##
 limma_standard <- function(eset, contrast = "study_time_reported", FDRthresh = 0.1){
   f <- factor(eset[[contrast]])
-  design <- model.matrix(~0+f)
+  design <- model.matrix(~0+f+eset$subject_accession)
   fit <- lmFit(eset, design)
   contrasts <- makeContrasts(paste0("f", f[2:length(levels(f))], "-f", f[[1]]), levels=design)
   fit2 <- contrasts.fit(fit, contrasts)
@@ -138,7 +109,28 @@ limma_standard <- function(eset, contrast = "study_time_reported", FDRthresh = 0
   return(tt)
 }
 
- 
+##
+#' Write gene expression analysis result to the database
+#'  
+#' This function writes the output of a standard limma analysis to the database and fill the appropriate tables.
+#' 
+#' @param topTable A \code{data.frame}, as returned by the \code{limma_standard} function,
+#'  or a \code{list} of \code{data.frame}.
+#' @param analysis_accession A \code{character} vector. The accession associated with the gene expression analysis.
+#'  The vector should be of the same length as topTable if topTable is a list.
+#' @param description A \code{character} vector. The description of the analysis. 
+#' 
+#' @return A \code{boolean}. TRUE if eveything went as expected.
+#'
+#' @seealso \code{\link{read_exprs_mat}} \code{\link{limma_standard}} \code{\link{labkey.importRows}}
+#' 
+#' @export
+#' @docType methods
+#' @rdname write_gea
+#' @aliases write_gea
+#' 
+#' @importFrom Rlbakey labkey.importRows
+##
 write_gea <- function(topTable, analysis_accession, description){
   # topTable: a topTable or list of topTables
   # analysis_accession: a string
@@ -224,7 +216,7 @@ write_gea <- function(topTable, analysis_accession, description){
 #                   queryName = "gene_expression_reagents", colNameOpt = "rname")
 # 
 # #test importRows
-# ti <- data.frame(GEA = paste("GEA", 1:500, sep="_"), description = "testImport")
+# ti <- data.frame(GEA = paste("GEA", 1:5, sep="_"), description = "testImport")
 # microbenchmark(import=
 #                  Rlabkey:::labkey.importRows(baseUrl = l.u.b, folderPath = l.u.p,
 #                   schemaName = "lists", queryName = "test_labkeyimportRows",
@@ -240,15 +232,14 @@ write_gea <- function(topTable, analysis_accession, description){
 # #insert 32720.7433 33143.1791 33565.6149 33785.6573 34005.6997     3
 # 
 # 
-# labkey.importRows(baseUrl = l.u.b, folderPath = l.u.p,
-#                   schemaName = "lists", queryName = "test_deleteRow",
-#                   toImport = ti)
-# td <- data.frame(GEA = paste("GEA", 1:500, sep="_"), stringsAsFactors=FALSE)
-# 
-# system.time(
-#   labkey.deleteRows(baseUrl=l.u.b, folderPath=l.u.p,
-#                     schemaName="lists", queryName="test_deleteRow",
-#                     toDelete  = td))
-# # 500 rows
-# #user  system elapsed 
-# #0.108   0.000  34.734 
+# nr <- 500
+# ti <- data.frame(GEA = paste("GEA", 1:nr, sep="_"), description = "testImport")
+# td <- data.frame(GEA = paste("GEA", 1:nr, sep="_"), stringsAsFactors=FALSE)
+# res <- labkey.importRows(baseUrl = l.u.b, folderPath = l.u.p, schemaName = "lists",
+#                          queryName = "test_deleteRow", toImport = ti)
+# res <- labkey.deleteRows(baseUrl=l.u.b, folderPath=l.u.p,
+#                     schemaName="lists", queryName="test_deleteRow",toDelete  = td)
+
+# Delete 500 rows
+#user  system elapsed 
+#0.108   0.000  34.734 
