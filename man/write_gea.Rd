@@ -1,10 +1,6 @@
-\docType{methods}
 \name{write_gea}
 \alias{write_gea}
 \title{Write gene expression analysis result to the database}
-\usage{
-  write_gea(topTable, analysis_accession, description)
-}
 \arguments{
   \item{topTable}{A \code{data.frame}, as returned by the
   \code{limma_standard} function, or a \code{list} of

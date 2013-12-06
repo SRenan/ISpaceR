@@ -1,11 +1,6 @@
-\docType{methods}
 \name{limma_standard}
 \alias{limma_standard}
 \title{Standard limma analysis}
-\usage{
-  limma_standard(eset, contrast = "study_time_reported",
-    FDRthresh = 0.1)
-}
 \arguments{
   \item{eset}{An \code{ExpressionSet}. The expression set
   to analyse.}

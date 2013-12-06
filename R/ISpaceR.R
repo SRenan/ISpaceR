@@ -6,17 +6,19 @@ e_m_a <- c("EXPM0001", "EXPM0002")
 ##
 #' Read expression matrix
 #' 
-#' Reads the gene_expression_matrix table and creates an ExpressionSet for the selected matrix
+#' Reads the gene_expression_matrix table and creates an ExpressionSet for the 
+#' selected matrix or matrices.
 #' 
-#' @param e_m_a A \code{character}. The accession number of the matrix or matrices to read.
+#' @param e_m_a A \code{character}. The accession number of the matrix or matrices
+#' to read.
 #' 
-#' @return A single \code{ExpressionSet} if a single expression_matrix_accession has been given.
-#' A \code{list} of \code{ExprssionSet} otherwise, with one element for each given matrix.
+#' @return A \code{list} of \code{ExpressionSet}, with one element for each 
+#' given matrix.
 #' 
 #' @note This function uses \code{RCurl} to query ImmuneSpace.
 #' Therefore, a valid .netrc file is needed when executed from a remote location.
 #' 
-#' @seealso \code{\link{limma_standard}} \code{\link{write_gea}}
+#' @seealso \code{\link{limma_standard}}, \code{\link{write_gea}}
 #' 
 #' @export
 #' @docType methods
@@ -25,7 +27,7 @@ e_m_a <- c("EXPM0001", "EXPM0002")
 #' 
 #' @examples
 #' labkey.url.base <- "https://www.immunespace.org/"
-#' labkey.url.path <- "/Yale/SDY61/"
+#' labkey.url.path <- "/Emory/SDY61/"
 #' read_exprs_mat("EXPM0001")
 #' 
 #' @importFrom data.table fread
@@ -61,7 +63,7 @@ read_exprs_mat <- function(e_m_a){
     phenodata <- as(phenodata, "AnnotatedDataFrame")
     fdata <- as(fdata_dfs[[exm]], "AnnotatedDataFrame")
     descr <- paste(umat[exm, "expression_matrix_accession"], ": ", umat[exm, "matrix_description_description"])
-    eset <- ExpressionSet(assayData = exprs, phenoData = phenodata, fdata = fdata)
+    eset <- ExpressionSet(assayData = exprs, phenoData = phenodata, featureData = fdata)
     eset@experimentData@title <- descr
     lEset[[exm]] <- eset  
   }
@@ -88,7 +90,7 @@ read_exprs_mat <- function(e_m_a){
 #' @rdname limma_standard
 #' @aliases limma_standard
 #' 
-#' @importFrom limma model.matrix lmFit eBayes makeContrasts topTable
+#' @importFrom limma lmFit eBayes makeContrasts topTable
 ##
 limma_standard <- function(eset, contrast = "study_time_reported", FDRthresh = 0.1){
   f <- factor(eset[[contrast]])
@@ -129,7 +131,7 @@ limma_standard <- function(eset, contrast = "study_time_reported", FDRthresh = 0
 #' @rdname write_gea
 #' @aliases write_gea
 #' 
-#' @importFrom Rlbakey labkey.importRows
+#' @importFrom Rlabkey labkey.importRows
 ##
 write_gea <- function(topTable, analysis_accession, description){
   # topTable: a topTable or list of topTables
@@ -209,37 +211,3 @@ write_gea <- function(topTable, analysis_accession, description){
 #   }
 # }
 # 
-# #test localhost
-# l.u.b <- "http://localhost:8080/labkey"
-# l.u.p <- "/home/WTFLK/"
-# res <- labkey.selectRows(baseUrl = l.u.b, folderPath = l.u.p, schemaName = "lists",
-#                   queryName = "gene_expression_reagents", colNameOpt = "rname")
-# 
-# #test importRows
-# ti <- data.frame(GEA = paste("GEA", 1:5, sep="_"), description = "testImport")
-# microbenchmark(import=
-#                  Rlabkey:::labkey.importRows(baseUrl = l.u.b, folderPath = l.u.p,
-#                   schemaName = "lists", queryName = "test_labkeyimportRows",
-#                   toImport = ti),
-#                insert=
-#                  Rlabkey:::labkey.insertRows(baseUrl = l.u.b, folderPath = l.u.p,
-#                   schemaName = "lists", queryName = "test_labkeyimportRows",
-#                   toInsert = ti),
-#               times=3)
-# #Unit: milliseconds
-# #expr        min         lq     median         uq        max neval
-# #import   187.1982   209.5302   231.8622   243.7528   255.6434     3
-# #insert 32720.7433 33143.1791 33565.6149 33785.6573 34005.6997     3
-# 
-# 
-# nr <- 500
-# ti <- data.frame(GEA = paste("GEA", 1:nr, sep="_"), description = "testImport")
-# td <- data.frame(GEA = paste("GEA", 1:nr, sep="_"), stringsAsFactors=FALSE)
-# res <- labkey.importRows(baseUrl = l.u.b, folderPath = l.u.p, schemaName = "lists",
-#                          queryName = "test_deleteRow", toImport = ti)
-# res <- labkey.deleteRows(baseUrl=l.u.b, folderPath=l.u.p,
-#                     schemaName="lists", queryName="test_deleteRow",toDelete  = td)
-
-# Delete 500 rows
-#user  system elapsed 
-#0.108   0.000  34.734 
